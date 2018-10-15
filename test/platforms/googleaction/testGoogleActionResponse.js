@@ -3,7 +3,7 @@ let expect = require('chai').expect;
 const GoogleActionResponse = require('../../../lib/platforms/googleaction/googleActionResponse').GoogleActionResponse;
 const GoogleActionResponseV2 = require('../../../lib/platforms/googleaction/googleActionResponseV2').GoogleActionResponseV2;
 
-describe.skip('Tests for GoogleActionResponse Class', function() {
+describe('Tests for GoogleActionResponse Class', function() {
     describe.skip('constructor()', function() {
         //
     });
@@ -104,11 +104,20 @@ describe.skip('Tests for GoogleActionResponse Class', function() {
     describe('addTable()', function() {
         it('should return a valid tell response with a table card', () => {
             let response = new GoogleActionResponseV2();
-            response.addTable('Table Title', 'Table Subtitle', ['header 1', 'header 2'], [['row 1 item 1', 'row 1 item 2'], ['row 2 item 1', 'row 2 item 2'], ['row 3 item 3', 'row 3 item 2']]).tell('<speak>Hello Test</speak>');
+            response.addTable(
+                'Table Title',
+                'Table Subtitle',
+                ['header 1', 'header 2'],
+                [
+                    ['row 1 item 1', 'row 1 item 2'],
+                    ['row 2 item 1', 'row 2 item 2'],
+                    ['row 3 item 3', 'row 3 item 2']
+                ]
+            ).tell('<speak>Hello Test</speak>');
 
             let responseObj = response.responseObj;
-            let responseObjData = responseObj.data;
-            expect(responseObj.speech).to.equal('<speak>Hello Test</speak>');
+            let responseObjData = responseObj.payload;
+            expect(responseObj.fulfillmentText).to.equal('<speak>Hello Test</speak>');
             expect(responseObjData.google.expectUserResponse).to.equal(false);
             expect(responseObjData.google.richResponse.items.length).to.equal(2);
             expect(responseObjData.google.richResponse.items[0].simpleResponse.ssml).to.equal('<speak>Hello Test</speak>');
@@ -128,6 +137,30 @@ describe.skip('Tests for GoogleActionResponse Class', function() {
             expect(() => {
                 response.addTable('Table Title', 'Table Subtitle', ['header 1', 'header 2']);
             }).to.throw('rowsText cannot be empty');
+        });
+    });
+
+    describe('askForRegisterUpdate()', function() {
+        it('should return a valid REGISTER_UPDATE intent', () => {
+            let response = new GoogleActionResponseV2();
+            response.addAskForRegisterUpdate('intent_name');
+
+            let systemIntent = response.responseObj.payload.google.systemIntent;
+
+            expect(systemIntent.intent).to.equal('actions.intent.REGISTER_UPDATE');
+            expect(systemIntent.inputValueData['@type']).to.equal('type.googleapis.com/google.actions.v2.RegisterUpdateValueSpec');
+            expect(systemIntent.inputValueData.intent).to.equal('intent_name');
+            expect(systemIntent.inputValueData.arguments).to.be.an('array');
+            expect(systemIntent.inputValueData.arguments.length).to.equal(0);
+            expect(systemIntent.inputValueData.triggerContext.timeContext.frequency).to.equal('DAILY');
+        });
+
+        it('should throw an error to not pass an empty intent', () => {
+            let response = new GoogleActionResponseV2();
+
+            expect(() => {
+                response.addAskForRegisterUpdate('');
+            }).to.throw('intent cannot be empty')
         });
     });
 
